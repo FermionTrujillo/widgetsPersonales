@@ -1,22 +1,10 @@
-//_____________________________Página Principal_________________________________
-//
-//   Desde esta página se controla todo. Con el PageView horizonal navegas desde
-// la página donde se muestra el Post inicial a la siguiente y a la página de
-// subir un Post. Desde la página del Post ves inicialmente la versión simple y
-// al hacer tap ves la versión entera (fullMode), al hacer doble tap en versión
-// simple ves el botón de pausa y la barra de progreso del vídeo. La página de
-// ver un Post tiene un PageView vertical que te lleva a la página de chat con
-// el usuario del Post.
-//   Para componer las dos versiones de la Main Screen tenemos los widgets:
-// Top, Middle, Report, Bottom, SimpleTop, SimpleMiddle y SimpleBottom Rows.
-//   Los botones están definidos en la carpeta widgets/, aquí están las
-// funciones de cada uno.
-
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:provider/provider.dart';
 
 import 'package:widgetspersonales/pages/chat_page.dart';
 import 'package:widgetspersonales/pages/upload_page.dart';
+import 'package:widgetspersonales/providers/provider.dart';
 import 'package:widgetspersonales/widgets/principal_appbar.dart';
 
 import 'package:widgetspersonales/widgets/principal_buttons.dart';
@@ -28,8 +16,9 @@ class PrincipalPage extends StatefulWidget {
 }
 
 class _PrincipalPageState extends State<PrincipalPage> {
-  bool fullMode = true;
+  bool fullMode = false;
   bool detailMode = true;
+  bool textFieldOn = false;
   static final horizontalController = PageController(
     initialPage: 1,
   );
@@ -37,78 +26,109 @@ class _PrincipalPageState extends State<PrincipalPage> {
 
   @override
   Widget build(BuildContext context) {
+    var myProvider = Provider.of<SearchTextFieldProvider>(context);
+    if (fullMode && !myProvider.textFieldOn) {
+      //------------ fullModeScreen ------------------------
+      return PageView(
+          controller: horizontalController,
+          physics: ClampingScrollPhysics(),
+          children: [
+            UploadPage(),
+            PageView(
+              scrollDirection: Axis.vertical,
+              children: [
+                Scaffold(
+                    body: GestureDetector(
+                  onDoubleTap: () {
+                    setState(() => fullMode = !fullMode);
+                  },
+                  onTap: () {
+                    setState(() => fullMode = !fullMode);
+                  },
+                  child: SafeArea(
+                      child: Stack(children: [
+                    Scaffold(),
+                    Container(
+                      padding: EdgeInsets.only(top: 31),
+                      width: double.infinity,
+                      height: double.infinity,
+                      child: Image.asset('assets/images/edificioplantas.jpg',
+                          fit: BoxFit.fitHeight),
+                    ),
+                    Container(
+                      color: Colors.transparent,
+                      child: Column(
+                        children: [
+                          CustomAppbar(),
+                          TopRow(),
+                          Expanded(child: MiddleRow()),
+                          ThirdStarRow(),
+                          ReportRow(),
+                          BottomRow(),
+                        ],
+                      ),
+                    )
+                  ])),
+                )),
+                ChatPage(),
+              ],
+            )
+          ]);
+    } else if (myProvider.textFieldOn) {
+      //-------- searchModeScreen ---------------------------------------
+      return PageView(
+          controller: horizontalController,
+          physics: ClampingScrollPhysics(),
+          children: [
+            UploadPage(),
+            GestureDetector(
+                onDoubleTap: () {
+                  setState(() => detailMode = !detailMode);
+                },
+                onTap: () {
+                  setState(() {
+                    fullMode = false;
+                    myProvider.textFieldOn = false;
+                  });
+                },
+                child: Stack(children: [
+                  Scaffold(),
+                  Container(
+                    width: double.infinity,
+                    height: double.infinity,
+                    child: Image.asset(
+                      'assets/images/edificioplantas.jpg',
+                      fit: BoxFit.fitHeight,
+                    ),
+                  ),
+                  SafeArea(
+                      child: Material(
+                    color: Colors.transparent,
+                    child: Column(
+                      children: [
+                        CustomAppbar(),
+                        SimpleTopRow(),
+                        SizedBox(
+                          height: 120,
+                        ),
+                        OnlyPauseRow(),
+                        ThirdStarRow(),
+                        SecondStarRow(),
+                        SimpleBottomRow(),
+                        //----------------_crearSlider(),-------------------
+                      ],
+                    ),
+                  ))
+                ])),
+          ]);
+    }
     return PageView(
+        //------------ simpleModeScreen ------------------------
         controller: horizontalController,
         physics: ClampingScrollPhysics(),
         children: [
           UploadPage(),
           PageView(scrollDirection: Axis.vertical, children: [
-            if (fullMode)
-              Scaffold(
-                  body: GestureDetector(
-                onDoubleTap: () {
-                  setState(() => fullMode = !fullMode);
-                }, // para que lo reconozca y no haga nada
-                onTap: () {
-                  setState(() => fullMode = !fullMode);
-                },
-                //-----STACK Y APPBAR PERSONALIZADO------------
-                child: SafeArea(
-                    child: Stack(children: [
-                  Scaffold(),
-                  Container(
-                    padding: EdgeInsets.only(top: 31),
-                    width: double.infinity,
-                    height: double.infinity,
-                    child: Image.asset('assets/images/edificioplantas.jpg',
-                        fit: BoxFit.fitWidth),
-                  ),
-                  Container(
-                    color: Colors.transparent,
-                    child: Column(
-                      children: [
-                        CustomAppBar(),
-                        TopRow(),
-                        Expanded(child: MiddleRow()),
-                        ThirdStarRow(),
-                        ReportRow(),
-                        BottomRow(),
-                      ],
-                    ),
-                  )
-                ])),
-              ))
-            else if (detailMode)
-              GestureDetector(
-                  onDoubleTap: () {
-                    setState(() => detailMode = !detailMode);
-                  },
-                  onTap: () {
-                    setState(() => fullMode = !fullMode);
-                  },
-                  child: Stack(children: [
-                    Scaffold(),
-                    Container(
-                      width: double.infinity,
-                      height: double.infinity,
-                      child: Image.asset('assets/images/edificioplantas.jpg',
-                          fit: BoxFit.fitWidth),
-                    ),
-                    SafeArea(
-                        child: Material(
-                      color: Colors.transparent,
-                      child: Column(
-                        children: [
-                          SimpleTopRow(),
-                          OnlyPauseRow(),
-                          ThirdStarRow(),
-                          SecondStarRow(),
-                          SimpleBottomRow(),
-                          _crearSlider(),
-                        ],
-                      ),
-                    ))
-                  ])),
             GestureDetector(
                 onDoubleTap: () {
                   setState(() {
@@ -126,7 +146,7 @@ class _PrincipalPageState extends State<PrincipalPage> {
                     width: double.infinity,
                     height: double.infinity,
                     child: Image.asset('assets/images/edificioplantas.jpg',
-                        fit: BoxFit.fitWidth),
+                        fit: BoxFit.fitHeight),
                   ),
                   SafeArea(
                       child: Material(
@@ -143,17 +163,7 @@ class _PrincipalPageState extends State<PrincipalPage> {
                   ))
                 ])),
             ChatPage()
-          ]), //_________________Segunda pagina____________________
-          SafeArea(
-              child: Scaffold(
-            body: Column(
-              children: [
-                SimpleTopRow(),
-                Expanded(child: SimpleMiddleRow()),
-                SimpleBottomRow(),
-              ],
-            ),
-          ))
+          ])
         ]);
   }
 
@@ -336,8 +346,8 @@ class ReportRow extends StatelessWidget {
     );
   }
 }
-//______________________BottomRow_____________________________
-// Boton logo, el de ir abajo (navegación a chat) y corazón.
+//______________________BottomRow_____________________________________
+// Boton logo, el de ir abajo (navegación a chat) y primera star.
 
 class BottomRow extends StatelessWidget {
   const BottomRow({Key key}) : super(key: key);
@@ -418,15 +428,17 @@ class OnlyPauseRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Container(
-          alignment: Alignment.center,
-          child: GeneralButton(
-            action: compartir,
-            icon: FaIcon(
-              FontAwesomeIcons.pauseCircle,
-            ),
-            iconSize: 50,
-          )),
+      child: Center(
+        child: Container(
+            alignment: Alignment.center,
+            child: GeneralButton(
+              action: compartir,
+              icon: FaIcon(
+                FontAwesomeIcons.pauseCircle,
+              ),
+              iconSize: 50,
+            )),
+      ),
     );
   }
 }
